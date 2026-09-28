@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "pedidos-db": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["run", "--no-build", "--project", "${workspaceFolder}/src/Pedidos.Mcp"],
+      "env": { "PEDIDOS_DB": "${workspaceFolder}/data/pedidos.db" }
+    }
+  }
+}
