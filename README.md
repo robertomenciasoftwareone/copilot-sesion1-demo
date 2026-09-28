@@ -23,3 +23,4 @@ dotnet run --project src/Pedidos.Api          # crea data/pedidos.db con 60 pedi
 | 6 · Arquitectura y docs | Agente `Arquitecto` → `docs/` |
 
 Sube el repo a GitHub (privado) antes de la sesión: la demo 3 y el servidor MCP de GitHub lo necesitan.
+
