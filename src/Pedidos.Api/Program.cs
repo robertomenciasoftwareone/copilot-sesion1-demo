@@ -3,6 +3,7 @@ using Pedidos.Api.Data;
 using Pedidos.Api.Exceptions;
 using Pedidos.Api.Models;
 using Pedidos.Api.Services;
+using Pedidos.Api.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +36,7 @@ app.MapGet("/orders/{id:int}", (int id, OrderService orders) =>
 
 app.MapPost("/orders", (OrderCreate data, OrderService orders) =>
 {
-    var errors = data.Validate();
+    var errors = OrderCreateValidator.Validate(data);
     if (errors.Count > 0)
     {
         return Results.ValidationProblem(errors);

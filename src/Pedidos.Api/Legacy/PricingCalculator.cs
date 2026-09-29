@@ -1,36 +1,55 @@
-#nullable disable
-// Modulo heredado. Nadie lo ha tocado desde 2017. NO TOCAR sin hablar con Contabilidad.
+#nullable enable
 namespace Pedidos.Api.Legacy;
 
+/// <summary>
+/// Calcula precios aplicando las reglas de descuentos e IVA del módulo heredado.
+/// </summary>
 public static class PricingCalculator
 {
-    public static decimal Calc(decimal p, int q, int t, string c = null, decimal d = 0)
+    private const decimal VatRate = 1.21m;
+    private const decimal QuantityDiscountRate = 0.05m;
+    private const decimal WholesaleDiscountRate = 0.9m;
+    private const decimal VipDiscountRate = 0.95m;
+    private const int FirstQuantityDiscountThreshold = 10;
+    private const int SecondQuantityDiscountThreshold = 50;
+
+    /// <summary>
+    /// Calcula el importe total de un pedido, incluidos los descuentos aplicables y el IVA.
+    /// </summary>
+    /// <param name="unitPrice">Precio unitario del producto.</param>
+    /// <param name="quantity">Cantidad de unidades.</param>
+    /// <param name="pricingType">Tipo de cálculo de precio.</param>
+    /// <param name="customerCode">Código del cliente, si está disponible.</param>
+    /// <param name="discount">Descuento fijo que se resta del subtotal.</param>
+    /// <returns>Importe total redondeado a dos decimales.</returns>
+    public static decimal Calc(decimal unitPrice, int quantity, int pricingType, string? customerCode = null, decimal discount = 0)
     {
-        // calcula precio
-        decimal r = 0;
-        if (t == 1)
+        decimal subtotal;
+        if (pricingType == 1)
         {
-            r = p * q;
-            if (q > 10)
-                r = r - r * 0.05m;
-            if (q > 50)
-                r = r - r * 0.05m;
+            subtotal = unitPrice * quantity;
+            if (quantity > FirstQuantityDiscountThreshold)
+                subtotal -= subtotal * QuantityDiscountRate;
+            if (quantity > SecondQuantityDiscountThreshold)
+                subtotal -= subtotal * QuantityDiscountRate;
         }
-        else if (t == 2)
+        else if (pricingType == 2)
         {
-            r = p * q * 0.9m;
-            if (c != null && c.StartsWith("VIP"))
-                r = r * 0.95m;
+            subtotal = unitPrice * quantity * WholesaleDiscountRate;
+            if (customerCode != null && customerCode.StartsWith("VIP"))
+                subtotal *= VipDiscountRate;
         }
         else
         {
-            r = p * q;
+            subtotal = unitPrice * quantity;
         }
-        if (d > 0)
-            r = r - d;
-        if (r < 0)
-            r = 0;
-        r = r * 1.21m;
-        return Math.Round(r, 2);
+
+        if (discount > 0)
+            subtotal -= discount;
+        if (subtotal < 0)
+            subtotal = 0;
+
+        subtotal *= VatRate;
+        return Math.Round(subtotal, 2);
     }
 }
