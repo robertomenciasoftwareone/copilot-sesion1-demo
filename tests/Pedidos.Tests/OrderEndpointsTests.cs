@@ -44,10 +44,57 @@ public class OrderEndpointsTests
     }
 
     [Fact]
+    public async Task CreateOrder_InvalidData_ReturnsValidationProblem()
+    {
+        using var factory = new PedidosApiFactory();
+        var client = factory.CreateClient();
+        var payload = new { customer = " ", product = "Producto", quantity = 1, unitPrice = 1m };
+
+        var response = await client.PostAsJsonAsync("/orders", payload);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True(json.TryGetProperty("errors", out var errors));
+        Assert.True(errors.TryGetProperty("Customer", out _));
+    }
+
+    [Fact]
     public void Calc_SmallQuantity_OnlyAddsVat()
     {
         var result = PricingCalculator.Calc(10m, 5, 1);
 
         Assert.Equal(60.50m, result);
+    }
+
+    [Fact]
+    public void Calc_QuantityOver50_AppliesBothQuantityDiscounts()
+    {
+        var result = PricingCalculator.Calc(10m, 51, 1);
+
+        Assert.Equal(556.93m, result);
+    }
+
+    [Fact]
+    public void Calc_Quantity60_AppliesBothQuantityDiscountsAndVat()
+    {
+        var result = PricingCalculator.Calc(10m, 60, 1);
+
+        Assert.Equal(655.22m, result);
+    }
+
+    [Fact]
+    public void Calc_VipWholesale_AppliesVipDiscount()
+    {
+        var result = PricingCalculator.Calc(100m, 1, 2, "VIP-123");
+
+        Assert.Equal(103.46m, result);
+    }
+
+    [Fact]
+    public void Calc_DiscountExceedsSubtotal_ClampsTotalToZero()
+    {
+        var result = PricingCalculator.Calc(10m, 1, 0, discount: 15m);
+
+        Assert.Equal(0m, result);
     }
 }
