@@ -8,6 +8,10 @@ namespace Pedidos.Api.Services;
 
 public sealed class OrderService(Database db)
 {
+    /// <summary>
+    /// Obtiene todos los pedidos ordenados por identificador.
+    /// </summary>
+    /// <returns>La lista de pedidos almacenados.</returns>
     public IReadOnlyList<Order> ListOrders()
     {
         using var connection = db.Open();
@@ -23,6 +27,12 @@ public sealed class OrderService(Database db)
         return orders;
     }
 
+    /// <summary>
+    /// Obtiene un pedido por su identificador.
+    /// </summary>
+    /// <param name="id">Identificador del pedido.</param>
+    /// <returns>El pedido solicitado.</returns>
+    /// <exception cref="OrderNotFoundException">Si no existe un pedido con el identificador indicado.</exception>
     public Order GetOrder(int id)
     {
         using var connection = db.Open();
@@ -38,6 +48,11 @@ public sealed class OrderService(Database db)
         return Map(reader);
     }
 
+    /// <summary>
+    /// Calcula el total y crea un pedido con estado pendiente.
+    /// </summary>
+    /// <param name="data">Datos del pedido que se desea crear.</param>
+    /// <returns>El pedido creado, incluido su identificador y total calculado.</returns>
     public Order CreateOrder(OrderCreate data)
     {
         var total = PricingCalculator.Calc(data.UnitPrice, data.Quantity, 1, data.Customer);
