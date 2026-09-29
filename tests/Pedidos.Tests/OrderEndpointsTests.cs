@@ -67,6 +67,25 @@ public class OrderEndpointsTests
     }
 
     [Fact]
+    public async Task CancelOrder_PaidOrder_ReturnsCancelledOrder()
+    {
+        using var factory = new PedidosApiFactory();
+        var client = factory.CreateClient();
+        var orders = await client.GetFromJsonAsync<JsonElement>("/orders");
+        var orderId = orders.EnumerateArray()
+            .First(order => order.GetProperty("status").GetString() == "Paid")
+            .GetProperty("id")
+            .GetInt32();
+
+        var response = await client.PostAsJsonAsync($"/orders/{orderId}/cancel", new { reason = "Error en el pedido" });
+        var cancelledOrder = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Cancelled", cancelledOrder.GetProperty("status").GetString());
+        Assert.Equal("Error en el pedido", cancelledOrder.GetProperty("cancelReason").GetString());
+    }
+
+    [Fact]
     public async Task CancelOrder_UnknownId_Returns404()
     {
         using var factory = new PedidosApiFactory();
