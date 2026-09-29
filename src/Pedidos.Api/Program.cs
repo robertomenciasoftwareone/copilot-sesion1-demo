@@ -46,6 +46,28 @@ app.MapPost("/orders", (OrderCreate data, OrderService orders) =>
     return Results.Created($"/orders/{order.Id}", order);
 });
 
+app.MapPost("/orders/{id:int}/cancel", (int id, OrderCancellation data, OrderService orders) =>
+{
+    var errors = data.Validate();
+    if (errors.Count > 0)
+    {
+        return Results.ValidationProblem(errors);
+    }
+
+    try
+    {
+        return Results.Ok(orders.CancelOrder(id, data.Reason!));
+    }
+    catch (OrderNotFoundException ex)
+    {
+        return Results.NotFound(new { detail = ex.Message });
+    }
+    catch (OrderCannotBeCancelledException ex)
+    {
+        return Results.Conflict(new { detail = ex.Message });
+    }
+});
+
 app.Run();
 
 public partial class Program { }

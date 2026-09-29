@@ -75,6 +75,30 @@ public sealed class OrderService(Database db)
         return GetOrder(newId);
     }
 
+    public Order CancelOrder(int id, string reason)
+    {
+        using var connection = db.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE orders
+            SET status = $cancelled, cancel_reason = $reason
+            WHERE id = $id AND status IN ($pending, $paid)
+            """;
+        command.Parameters.AddWithValue("$cancelled", OrderStatus.Cancelled.ToString());
+        command.Parameters.AddWithValue("$reason", reason);
+        command.Parameters.AddWithValue("$id", id);
+        command.Parameters.AddWithValue("$pending", OrderStatus.Pending.ToString());
+        command.Parameters.AddWithValue("$paid", OrderStatus.Paid.ToString());
+
+        if (command.ExecuteNonQuery() == 0)
+        {
+            var order = GetOrder(id);
+            throw new OrderCannotBeCancelledException(id, order.Status);
+        }
+
+        return GetOrder(id);
+    }
+
     private static Order Map(SqliteDataReader r) => new(
         r.GetInt32(r.GetOrdinal("id")),
         r.GetString(r.GetOrdinal("customer")),
