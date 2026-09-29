@@ -30,3 +30,13 @@ public sealed record OrderCreate(string Customer, string Product, int Quantity, 
         return errors;
     }
 }
+
+public sealed record OrderCancellation(string? Reason)
+{
+    public Dictionary<string, string[]> Validate()
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(Reason)) errors[nameof(Reason)] = ["El motivo de cancelación es obligatorio."];
+        return errors;
+    }
+}
